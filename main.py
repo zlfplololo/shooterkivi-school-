@@ -22,6 +22,8 @@ SHIP_SPEED = dp(5)
 DIR_UP = 1
 DIR_DOWN = 1
 
+dundun = 1
+
 SPAWN_ENEMY_TIME = 2
 
 HP_DEF = 3
