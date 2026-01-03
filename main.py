@@ -20,7 +20,7 @@ FPS = 60
 BULLET_SPEED = dp(10)
 SHIP_SPEED = dp(5)
 DIR_UP = 1
-DIR_DOWN = 1
+DIR_DOWN = -1
 
 dundun = 1
 
