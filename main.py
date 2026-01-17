@@ -38,6 +38,13 @@ class Shot(MDWidget):
         self.direction = direction
         self.owner = owner  # хто стріляв (гравець або ворог)
 
+class Mine(MDWidget):
+    def __init__(self, direction, owner, time,  **kwargs):
+        super().__init__(**kwargs)
+        self.direction = direction
+        self.owner = owner
+        self.time = time
+
 
 class Ship(Image):
     hp = NumericProperty()
@@ -86,6 +93,10 @@ class PlayerShip(Ship):
                 if key == 'shot':
                     if self._last_shot >= self.fire_rate:
                         self.shot()
+                    keys[key] = False
+                if key == 'mina':
+                    if self._last_shot >= self.fire_rate:
+                        self.throwmine()
                     keys[key] = False
 
 
@@ -270,7 +281,7 @@ class GameScreen(MDScreen):
     
     # Керування з клавіатури під час тестування з комп'ютера
     def _on_key_down(self, window, keycode, *args, **kwargs):
-        key = key if (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' else 'shot'
+        key = key if (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' else 'shot' if key if (key := Keyboard.keycode_to_string(window, keycode)) != 'E'
         self.eventkeys[key] = True
 
     def _on_key_up(self, window, keycode, *args, **kwargs):
