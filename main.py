@@ -28,7 +28,7 @@ SPAWN_ENEMY_TIME = 2
 
 HP_DEF = 3
 
-FIRE_RATE_MIN = 0.5
+FIRE_RATE_MIN = 0.25
 FIRE_RATE_MEDIUM = 2
 FIRE_RATE_DEF = FIRE_RATE_MIN
 
@@ -223,7 +223,7 @@ class GameScreen(MDScreen):
             # перевіряємо потрапляння у гравця
             if bullet.collide_widget(self.ship):
                 self.ship.hp -= 1
-                print(self.ship.hp)
+                #print(self.ship.hp)
 
                 if self.ship.hp <= 0:
                     self.game_over()
@@ -281,7 +281,7 @@ class GameScreen(MDScreen):
     
     # Керування з клавіатури під час тестування з комп'ютера
     def _on_key_down(self, window, keycode, *args, **kwargs):
-        key = key if (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' else 'shot' if key if (key := Keyboard.keycode_to_string(window, keycode)) != 'E'
+        key = key if (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' or (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' == 'E' else 'shot' if (key := Keyboard.keycode_to_string(window, keycode)) != 'E' else 'mina'
         self.eventkeys[key] = True
 
     def _on_key_up(self, window, keycode, *args, **kwargs):
