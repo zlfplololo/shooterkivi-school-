@@ -97,6 +97,11 @@
                     md_bg_color: app.theme_cls.primary_color
                     on_press: root.pressKey('shot')
                     on_release: root.releaseKey('shot')
+                MDFloatingActionButton:
+                    icon: "arrow-up-bold"
+                    md_bg_color: app.theme_cls.primary_color
+                    on_press: root.pressKey('mina')
+                    on_release: root.releaseKey('mina')
 
 
 <Shot>:
@@ -104,6 +109,8 @@
     size: 20, 20
     md_bg_color: app.theme_cls.accent_color
 
+<Mine>:
+    source: "assets/images/mine.png"
 
 <GameOverScreen>:
     MDBoxLayout: 

@@ -18,6 +18,7 @@ from kivymd.uix.fitimage import FitImage
 
 FPS = 60
 BULLET_SPEED = dp(10)
+Mine_SPEED = dp(1)
 SHIP_SPEED = dp(5)
 DIR_UP = 1
 DIR_DOWN = -1
@@ -28,7 +29,7 @@ SPAWN_ENEMY_TIME = 2
 
 HP_DEF = 3
 
-FIRE_RATE_MIN = 0.25
+FIRE_RATE_MIN = 0.5
 FIRE_RATE_MEDIUM = 2
 FIRE_RATE_DEF = FIRE_RATE_MIN
 
@@ -38,12 +39,13 @@ class Shot(MDWidget):
         self.direction = direction
         self.owner = owner  # хто стріляв (гравець або ворог)
 
-class Mine(MDWidget):
-    def __init__(self, direction, owner, time,  **kwargs):
+class Mine(Image):
+    def __init__(self, direction, owner, time, acceleration, **kwargs):
         super().__init__(**kwargs)
         self.direction = direction
         self.owner = owner
         self.time = time
+        self.acceleration = acceleration
 
 
 class Ship(Image):
@@ -98,6 +100,12 @@ class PlayerShip(Ship):
                     if self._last_shot >= self.fire_rate:
                         self.throwmine()
                     keys[key] = False
+    def throwmine(self):
+        mine = Shot(self.direction, owner=self, time=10, acceleration=5)
+        mine.center_x = self.center_x
+        mine.y = self.top if self.direction == DIR_UP else self.y - shot.height
+        self.parent.parent.parent.parent.mines.append(mine)
+        self.parent.add_widget(mine)
 
 
 class EnemyShip(Ship):
@@ -136,6 +144,7 @@ class GameScreen(MDScreen):
         self.enemyShips = []
 
         self.bullets = []
+        self.mines = []
 
         self.pauseMenu = None
 
@@ -206,6 +215,12 @@ class GameScreen(MDScreen):
             # Перевірка виходу за рамки вікна
             if bullet.top < 0 or bullet.y > Window.height:
                 self.remove_bullet(bullet)
+        for mine in self.mines[:]:
+            mine.y += Mine_SPEED * mine.direction * mine.acceleration
+            mine.acceleration -= 0.1
+            mine.time -= dt
+            if mine.time <= 0:
+                pass
 
     def check_collisions(self, bullet):
         if bullet.owner == self.ship:
@@ -223,7 +238,7 @@ class GameScreen(MDScreen):
             # перевіряємо потрапляння у гравця
             if bullet.collide_widget(self.ship):
                 self.ship.hp -= 1
-                #print(self.ship.hp)
+                print(self.ship.hp)
 
                 if self.ship.hp <= 0:
                     self.game_over()
@@ -281,11 +296,11 @@ class GameScreen(MDScreen):
     
     # Керування з клавіатури під час тестування з комп'ютера
     def _on_key_down(self, window, keycode, *args, **kwargs):
-        key = key if (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' or (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' == 'E' else 'shot' if (key := Keyboard.keycode_to_string(window, keycode)) != 'E' else 'mina'
+        key = key if (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' and (key := Keyboard.keycode_to_string(window, keycode)) != 'e' else 'shot' if (key := Keyboard.keycode_to_string(window, keycode)) != 'e' else 'mine'
         self.eventkeys[key] = True
 
     def _on_key_up(self, window, keycode, *args, **kwargs):
-        key = key if (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' else 'shot'
+        key = key if (key := Keyboard.keycode_to_string(window, keycode)) != 'spacebar' and (key := Keyboard.keycode_to_string(window, keycode)) != 'e' else 'shot' if (key := Keyboard.keycode_to_string(window, keycode)) != 'e' else 'mine'
         self.eventkeys[key] = False
 
 
