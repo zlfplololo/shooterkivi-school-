@@ -32,7 +32,7 @@ HP_DEF = 3
 FIRE_RATE_MIN = 0.5
 FIRE_RATE_MEDIUM = 2
 FIRE_RATE_DEF = FIRE_RATE_MIN
-MINE_FIRE_RATE = 1.5
+MINE_FIRE_RATE = 2.5
 
 class Shot(MDWidget):
     def __init__(self, direction, owner, **kwargs):
@@ -41,14 +41,20 @@ class Shot(MDWidget):
         self.owner = owner  # хто стріляв (гравець або ворог)
 
 class Mine(Image):
-    def __init__(self, direction, time, acceleration, owner, **kwargs):
+    def __init__(self, direction, time, acceleration, radt, maxr, owner, **kwargs):
         super().__init__(**kwargs)
         self.direction = direction
         self.owner = owner
         self.time = time
         self.acceleration = acceleration
+        self.blowne = False
+        self.radius = 0
+        self.maxradius = maxr
+        self.radntime = radt
+        self.radmaxtime = radt
     def blow(self):
-        self.opacity = 0
+        self.blowne = True
+        self.source = "assets/images/mine_blown.png"
 
 
 class Ship(Image):
@@ -105,7 +111,7 @@ class PlayerShip(Ship):
                         self.throwmine()
                     keys[key] = False
     def throwmine(self):
-        mine = Mine(self.direction, 3, 5, self)
+        mine = Mine(self.direction, 3, 5, 3, 100, self)
         mine.center_x = self.center_x
         mine.y = self.top if self.direction == DIR_UP else self.y - mine.height
         self.parent.parent.parent.parent.mines.append(mine)
@@ -222,14 +228,21 @@ class GameScreen(MDScreen):
             if bullet.top < 0 or bullet.y > Window.height:
                 self.remove_bullet(bullet)
         for mine in self.mines[:]:
-            mine.y += Mine_SPEED * mine.direction * mine.acceleration
-            mine.acceleration -= 0.1 if mine.acceleration > 0 else 0
-            mine.time -= dt
-            if mine.time <= 0:
-                mine.blow()
-                self.ids.front.remove_widget(mine)
-                self.mines.remove(mine)
-                pass
+            if not mine.blowne:
+                mine.y += Mine_SPEED * mine.direction * mine.acceleration
+                mine.acceleration -= 0.1 if mine.acceleration > 0 else 0
+                mine.time -= dt
+                if mine.time <= 0:
+                    mine.blow()
+                    pass
+            else:
+                mine.radntime -= dt
+                mine.radius = (mine.radmaxtime - mine.radntime) / mine.radmaxtime * mine.maxradius
+                if mine.radntime <= 0:
+                    self.mines.remove(mine)
+                    self.ids.front.remove_widget(mine)
+                    pass
+                self.check_blow_collisions(mine)
 
     def check_collisions(self, bullet):
         if bullet.owner == self.ship:
@@ -253,6 +266,13 @@ class GameScreen(MDScreen):
                     self.game_over()
 
                 self.remove_bullet(bullet)
+    def check_blow_collisions(self, mine):
+        for enemy in self.enemyShips[:]:
+            if ((enemy.x - mine.x)**2 + (enemy.y - mine.y)**2) ** (0.5) <= mine.radius **2:
+                self.enemyShips.remove(enemy)
+                self.ids.front.remove_widget(enemy)
+
+                
 
     def remove_bullet(self, bullet):
         if bullet in self.bullets:
