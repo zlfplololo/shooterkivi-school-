@@ -32,6 +32,7 @@ HP_DEF = 3
 FIRE_RATE_MIN = 0.5
 FIRE_RATE_MEDIUM = 2
 FIRE_RATE_DEF = FIRE_RATE_MIN
+MINE_FIRE_RATE = 1.5
 
 class Shot(MDWidget):
     def __init__(self, direction, owner, **kwargs):
@@ -40,12 +41,14 @@ class Shot(MDWidget):
         self.owner = owner  # хто стріляв (гравець або ворог)
 
 class Mine(Image):
-    def __init__(self, direction, owner, time, acceleration, **kwargs):
+    def __init__(self, direction, time, acceleration, owner, **kwargs):
         super().__init__(**kwargs)
         self.direction = direction
         self.owner = owner
         self.time = time
         self.acceleration = acceleration
+    def blow(self):
+        self.opacity = 0
 
 
 class Ship(Image):
@@ -82,6 +85,7 @@ class Ship(Image):
 class PlayerShip(Ship):
     def __init__(self, **kwargs):
         super().__init__(direction=DIR_UP, fire_rate=FIRE_RATE_MIN, **kwargs)
+        self.mfr = MINE_FIRE_RATE
 
     def update(self, dt, keys):
         super().update(dt)
@@ -97,15 +101,17 @@ class PlayerShip(Ship):
                         self.shot()
                     keys[key] = False
                 if key == 'mina':
-                    if self._last_shot >= self.fire_rate:
+                    if self._last_shot >= self.mfr:
                         self.throwmine()
                     keys[key] = False
     def throwmine(self):
-        mine = Shot(self.direction, owner=self, time=10, acceleration=5)
+        mine = Mine(self.direction, 3, 5, self)
         mine.center_x = self.center_x
-        mine.y = self.top if self.direction == DIR_UP else self.y - shot.height
+        mine.y = self.top if self.direction == DIR_UP else self.y - mine.height
         self.parent.parent.parent.parent.mines.append(mine)
         self.parent.add_widget(mine)
+
+        self._last_shot = 0
 
 
 class EnemyShip(Ship):
@@ -199,13 +205,13 @@ class GameScreen(MDScreen):
                 self.game_over()
 
         # кулі
-        self.manage_bullets()
+        self.manage_bullets(dt)
 
         # Прокрутка фону
         self.backBack.move()
         self.backFront.move()
 
-    def manage_bullets(self):
+    def manage_bullets(self, dt):
         for bullet in self.bullets[:]:
             bullet.y += BULLET_SPEED * bullet.direction
 
@@ -217,9 +223,12 @@ class GameScreen(MDScreen):
                 self.remove_bullet(bullet)
         for mine in self.mines[:]:
             mine.y += Mine_SPEED * mine.direction * mine.acceleration
-            mine.acceleration -= 0.1
+            mine.acceleration -= 0.1 if mine.acceleration > 0 else 0
             mine.time -= dt
             if mine.time <= 0:
+                mine.blow()
+                self.ids.front.remove_widget(mine)
+                self.mines.remove(mine)
                 pass
 
     def check_collisions(self, bullet):
@@ -260,6 +269,9 @@ class GameScreen(MDScreen):
         for bullet in self.bullets[:]:
             self.ids.front.remove_widget(bullet)
             self.bullets.remove(bullet)
+        for mine in self.mines[:]:
+            self.ids.front.remove_widget(mine)
+            self.mines.remove(mine)
 
         self.manager.current = 'game_over'
 
